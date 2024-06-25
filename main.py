@@ -121,4 +121,4 @@ if __name__=='__main__':
         b_transcribe.click(fn=speech_to_text, inputs=[file_upload, check], outputs=[text_result])
         b_summarize.click(fn=summarize, inputs=[text_result, check], outputs=[text_summ])
 
-    demo.launch(share=True)
+    demo.launch(share=False)
