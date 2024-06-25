@@ -1,4 +1,19 @@
-import os
-os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+import multiprocessing as mp
 
-import tensorflow as tf
+def bo(n,results):
+    results[n]=(n*n)
+
+if __name__=='__main__':
+
+    p=[]
+    manager = mp.Manager()
+    results=manager.list()
+    for i in range(0,3):
+        p.append(mp.Process(target=bo, args=(i,results)))
+        results.append("")
+        p[i].start()
+
+    for i in range(0,3):
+        p[i].join()
+
+    print(results)
