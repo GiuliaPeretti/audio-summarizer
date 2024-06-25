@@ -47,7 +47,7 @@ def summarize(text):
     # return(new_aliases[len(new_aliases)-10:])
     return(result)
 
-def summ_part(i, parts, length, sound, results):
+def summ_part(i, parts, length, sound, results,recognizer_instance):
     if i==parts:
         p = sound[i*length:]
     p = sound[i*length:(i+1)*length]
@@ -55,45 +55,69 @@ def summ_part(i, parts, length, sound, results):
 # create a new file "first_half.mp3":
     p.export("current_part"+str(1)+".wav", format="wav")
 
-    recognizer_instance = sr.Recognizer() # Crea una istanza del recognizer
+    
     wav = sr.AudioFile("current_part"+str(1)+".wav") # formati riconosciuti: .aiff .flac .wav
 
     with wav as source:
         recognizer_instance.pause_threshold = 3.0
         audio = recognizer_instance.listen(source)
-        print("Ok! sto ora elaborando il messaggio!")
+        print(str(i) +"Ok! sto ora elaborando il messaggio!")
     try:
         text = recognizer_instance.recognize_google(audio, language="it-IT")
         print(text)
-        result=+(text)+"\n"
+        result=(text)+"\n"
     except Exception as e:
         print(e)
     results[i]=result
+    print(str(i)+"finito")
 
+def convert_file(file):
+    sound= AudioSegment.from_file(file).export("sound.wav", format="wav")
+    # sound = AudioSegment.from_file(file, "wav")
+    # sound.export("sound.wav", format="wav")
+    return(sound)
 
 
 
 def prova(file):
+    recognizer_instance = sr.Recognizer() # Crea una istanza del recognizer
     dim=os.path.getsize(file)
-    print(dim)
-    parts=(dim//10000000)+1
-    sound = AudioSegment.from_file(file)
-    length = len(sound) // parts
+    if (dim>10000000):
+        print(dim)
+        parts=(dim//10000000)
+        sound = AudioSegment.from_file(file)
+        length = len(sound) // parts
 
-    p=[]
-    manager = mp.Manager()
-    results=manager.list()
+        p=[]
+        manager = mp.Manager()
+        results=manager.list()
 
-    for i in range (parts+1):
-        p.append(mp.Process(target=summ_part, args=(i,parts,length,sound, results)))
-        results.append("")
-        p[i].start()
+        for i in range (parts+1):
+            p.append(mp.Process(target=summ_part, args=(i,parts,length,sound, results,recognizer_instance)))
+            results.append("")
+            p[i].start()
 
-    for i in range(0,3):
-        p[i].join()
-        
+        tot_result=""
+        for i in range (parts+1):
+            p[i].join()
+            tot_result=tot_result+results[i]
+    else:
+        sound = AudioSegment.from_file(file)
+        sound.export("current_part.mp3", format="mp3")
+        wav = sr.AudioFile("current_part.wav") # formati riconosciuti: .aiff .flac .wav
 
-    return(results)
+        with wav as source:
+            recognizer_instance.pause_threshold = 3.0
+            audio = recognizer_instance.listen(source)
+            print("Ok! sto ora elaborando il messaggio!")
+        try:
+            text = recognizer_instance.recognize_google(audio, language="it-IT")
+            print(text)
+            tot_result=(text)+"\n"
+        except Exception as e:
+            print(e)
+
+    return(tot_result)
 
 
 if __name__=='__main__':
